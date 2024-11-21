@@ -1,0 +1,9 @@
+[package]
+name = "my_csvpn_pinger"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.8.0-alpha.1"
+tokio = { version = "1.41.1", features = ["full"] }
+tower = "0.5.1"
