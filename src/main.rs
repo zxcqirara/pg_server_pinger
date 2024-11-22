@@ -5,14 +5,19 @@ use std::net::{TcpStream};
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use tracing::{error, info};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 	dotenv().ok();                 // Init .env file
-	env_logger::Builder::from_env( // Init logger
-		env_logger::Env::default()
-			.default_filter_or("info")
-	).init();
+	tracing_subscriber::registry() // Init logger
+		.with(
+			tracing_subscriber::EnvFilter::try_from_default_env()
+				.unwrap_or_else(|_| format!("{}=info", env!("CARGO_CRATE_NAME")).into())
+		)
+		.with(tracing_subscriber::fmt::layer())
+		.init();
 
 	// Get some vars from env
 	let target_host = env::var("TARGET_HOST")
