@@ -5,11 +5,15 @@ use std::net::{TcpStream};
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use tracing::{error, info};
+use tracing::log::LevelFilter;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	dotenv().ok();      // Init .env file
-	env_logger::init(); // Init logger
+	dotenv().ok();                 // Init .env file
+	env_logger::Builder::from_env( // Init logger
+		env_logger::Env::default()
+			.default_filter_or("info")
+	).init();
 
 	// Get some vars from env
 	let target_host = env::var("TARGET_HOST")
@@ -35,12 +39,12 @@ async fn main() -> anyhow::Result<()> {
 	// Main check loop
 	loop {
 		match ping_server(&target_host, target_port, timeout) {
-			Some(delay) if !is_last_ping_success => {
+			Ok(delay) if !is_last_ping_success => {
 				info!("{}", format!("Success: {:0.2?}", delay).green());
 				is_last_ping_success = true;
 			},
-			None if is_last_ping_success => {
-				error!("{}", "Failed to ping the server".red());
+			Err(e) if is_last_ping_success => {
+				error!("{}", format!("Failed to ping the server: {}", e).red());
 				is_last_ping_success = false;
 			},
 			_ => {}
@@ -51,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 // This function is written by ChatGPT lol
-fn ping_server(host: &str, port: u16, timeout: Duration) -> Option<Duration> {
+fn ping_server(host: &str, port: u16, timeout: Duration) -> anyhow::Result<Duration> {
 	let address = format!("{}:{}", host, port);
 	let start = Instant::now();
 
@@ -61,11 +65,11 @@ fn ping_server(host: &str, port: u16, timeout: Duration) -> Option<Duration> {
 	match connection_result {
 		Ok(_) => {
 			// If connection succeeds, calculate the elapsed time
-			Some(start.elapsed())
+			Ok(start.elapsed())
 		}
-		Err(_) => {
-			// If connection fails, return None
-			None
+		Err(e) => {
+			// If connection fails, return error
+			Err(e.into())
 		}
 	}
 }
