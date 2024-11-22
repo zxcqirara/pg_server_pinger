@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
 		.parse()
 		.expect("DELAY_SECS is not a u64 number");
 
-	info!("{}", format!("Checking {target_host}...").blue());
+	info!("{}", format!("Checking {target_host} with TPC pings...").blue());
 
 	// Init timeouts and delays
 	let timeout = Duration::from_secs(10);
