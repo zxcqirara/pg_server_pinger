@@ -5,7 +5,6 @@ use std::net::{TcpStream};
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use tracing::{error, info};
-use tracing::log::LevelFilter;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -60,7 +59,7 @@ fn ping_server(host: &str, port: u16, timeout: Duration) -> anyhow::Result<Durat
 	let start = Instant::now();
 
 	// Attempt to connect to the server
-	let connection_result = TcpStream::connect_timeout(&address.parse().unwrap(), timeout);
+	let connection_result = TcpStream::connect_timeout(&address.parse()?, timeout);
 
 	match connection_result {
 		Ok(_) => {
