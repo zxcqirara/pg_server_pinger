@@ -9,6 +9,7 @@ dotenv = "0.15.0"
 colored = "2.1.0"
 anyhow = "1.0.93"
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "local-time", "chrono"] }
+chrono = { version = "0.4.38" }
 teloxide = { version = "0.13.0", features = ["rustls"], default-features = false }
 rustls = "0.23.18"
