@@ -3,8 +3,11 @@ use dotenv::dotenv;
 use std::env;
 use std::net::{TcpStream};
 use std::time::{Duration, Instant};
+use teloxide::payloads::SendMessageSetters;
+use teloxide::prelude::Requester;
+use teloxide::types::{ChatId, ParseMode};
 use tokio::time::sleep;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -33,23 +36,64 @@ async fn main() -> anyhow::Result<()> {
 		.parse()
 		.expect("DELAY_SECS is not a u64 number");
 
-	info!("{}", format!("Checking {target_host} with TPC pings...").blue());
+	let high_delay_threshold_millis: u64 = env::var("HIGH_DELAY_THRESHOLD_MILLIS")
+		.expect("HIGH_DELAY_THRESHOLD_MILLIS is not set")
+		.parse()
+		.expect("HIGH_DELAY_THRESHOLD_MILLIS is not a u64 number");
+
+	let telegram_token = env::var("TELEGRAM_TOKEN")
+		.expect("TELEGRAM_TOKEN is not set");
+
+	let telegram_group_id: i64 = env::var("TELEGRAM_GROUP_ID")
+		.expect("TELEGRAM_GROUP_ID is not set")
+		.parse()
+		.expect("TELEGRAM_GROUP_ID is not a number");
+	let telegram_group_id = ChatId(telegram_group_id);
+
+	info!("Initializing bot...");
+
+	let bot = teloxide::Bot::new(telegram_token);
+
+	{ // getme check
+		let me = bot.get_me().await.expect("Failed to initialize bot");
+		let username = me.username.clone().expect("Failed to fetch bot username");
+
+		info!("Bot initialized: {}", format!("@{username}").cyan());
+	}
+
+	info!("Checking {target_host} with TPC pings...");
 
 	// Init timeouts and delays
 	let timeout = Duration::from_secs(10);
 	let delay_secs = Duration::from_secs(delay_secs);
-	let mut is_last_ping_success = false;
+	let mut is_last_ping_success = None;
 
 	// Main check loop
 	loop {
 		match ping_server(&target_host, target_port, timeout) {
-			Ok(delay) if !is_last_ping_success => {
-				info!("{}", format!("Success: {:0.2?}", delay).green());
-				is_last_ping_success = true;
+			Ok(delay) if is_last_ping_success.is_none_or(|b: bool| !b) => {
+				let formatted_delay = format!("{:0.2?}", delay);
+
+				if delay > Duration::from_millis(high_delay_threshold_millis) {
+					warn!("{}", format!("High ping: {formatted_delay}").yellow());
+
+					bot.send_message(telegram_group_id, format!("Повышенный пинг на сервере: *{formatted_delay}*"))
+						.parse_mode(ParseMode::MarkdownV2)
+						.await?;
+				} else {
+					info!("{}", format!("Success: {formatted_delay}").green());
+				}
+
+				is_last_ping_success = Some(true);
 			},
-			Err(e) if is_last_ping_success => {
+			Err(e) if is_last_ping_success.is_none_or(|b| b) => {
 				error!("{}", format!("Failed to ping the server: {}", e).red());
-				is_last_ping_success = false;
+
+				bot.send_message(telegram_group_id, format!("Произошла критическая апшыпка:\n```\n{e:?}\n```"))
+					.parse_mode(ParseMode::MarkdownV2)
+					.await?;
+
+				is_last_ping_success = Some(false);
 			},
 			_ => {}
 		}
