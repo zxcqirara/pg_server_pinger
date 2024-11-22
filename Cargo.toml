@@ -4,15 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = "0.8.0-alpha.1"
 tokio = { version = "1.41.1", features = ["full"] }
-tower = "0.5.1"
 dotenv = "0.15.0"
 colored = "2.1.0"
-reqwest = "0.12.9"
 anyhow = "1.0.93"
-futures = "0.3.31"
-ping = "0.5.2"
-socket2 = "0.5.7"
 tracing = "0.1.40"
 env_logger = "0.11.5"
