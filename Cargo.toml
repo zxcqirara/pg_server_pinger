@@ -11,3 +11,4 @@ anyhow = "1.0.93"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 teloxide = "0.13.0"
+openssl = { version = "0.10.68", features = ["vendored"] }
