@@ -1,7 +1,7 @@
 use colored::Colorize;
 use dotenv::dotenv;
 use std::env;
-use std::net::{TcpStream};
+use std::net::TcpStream;
 use std::time::{Duration, Instant};
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
