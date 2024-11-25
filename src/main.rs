@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
 				if delay > Duration::from_millis(high_delay_threshold_millis) {
 					warn!("{}", format!("High ping: {formatted_delay}").yellow());
 
-					bot.send_message(telegram_group_id, format!("Повышенный пинг на сервере: *{formatted_delay}*"))
+					bot.send_message(telegram_group_id, format!("Повышенный пинг на сервере: *{formatted_delay}*").replace(".", "\\."))
 						.parse_mode(ParseMode::MarkdownV2)
 						.await?;
 				} else {
